@@ -1,0 +1,14 @@
+{
+  "autoload": {
+    "classmap": [
+      "./"
+    ],
+    "files": [
+      "./App/Functions/CardFunctions.php",
+      "./Core/functions.php"
+    ]
+  },
+  "require": {
+    "ext-pdo": "*"
+  }
+}
