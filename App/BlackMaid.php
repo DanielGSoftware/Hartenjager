@@ -27,7 +27,6 @@ class BlackMaid
 
     public function startGame()
     {
-        // Check if a user has reached over 50 points
         while (true) {
             if ($this->checkIfGameEnds()) {
                 die();
@@ -38,25 +37,32 @@ class BlackMaid
                 $this->playRound();
             }
         }
+    }
 
+    private function shiftStartingPlayer()
+    {
+        $firstUser = array_shift($this->users);
+        $this->users[3] = $firstUser;
     }
 
     protected function playRound()
     {
         $this->cardsInSet = [];
         $turn = 1;
+
         foreach ($this->users as $key => $user) {
-            $this->selectCardService->setCards($user->cards);
+            $this->selectCardService->setCards($user->getCards());
             $this->selectCardService->setCardsInSet($this->cardsInSet);
             $this->selectCardService->setTurn($turn);
 
             $card = $this->selectCardService->selectCard();
-            $this->playCard($card, $user,);
-            $this->removeCardFromUser($card, $key);
+            $this->playCard($card, $user);
             $turn++;
+
         }
         $this->assignPenaltyPoints();
         echo '<br/> ';
+        $this->shiftStartingPlayer();
     }
 
 
@@ -64,25 +70,10 @@ class BlackMaid
     {
         $this->cardsInSet[] = $card;
         echo "<pre> {$user->name} has played ";
+        $user->removeCard($card);
         echo beautifyCardHtml($card);
     }
 
-    private function removeCardFromUser(Card $card, int $userKey): bool
-    {
-        $cardCategory = ($card->category !== 'hearts') ? 'otherCategories' : $card->category;
-        $user = $this->users[$userKey];
-
-        foreach ($user->cards[$cardCategory] as $key => $userCard) {
-            if ($userCard->id === $card->id) {
-                //unset($this->users[$userKey]->cards[$cardCategory][$key]);
-                $cardsArr = $this->users[$userKey]->cards[$cardCategory];
-                $this->users[$userKey]->cards[$cardCategory] = array_splice($cardsArr, $key, $key);
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     private function checkIfGameEnds(): bool
     {
@@ -115,7 +106,7 @@ class BlackMaid
 
     private function usersHaveCards(): bool
     {
-        if (empty($this->users[0]->cards)) {
+        if (empty($this->users[0]->getCards())) {
             return false;
         }
         return true;

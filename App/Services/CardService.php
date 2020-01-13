@@ -3,7 +3,6 @@
 namespace App\App\Services;
 
 use App\App\Models\Card;
-use App\App\Models\User;
 
 class CardService
 {
@@ -23,31 +22,18 @@ class CardService
 
         foreach ($users as $user) {
             $cards = array_splice($cardsToAssign, 0, 8);
-            echo "<pre>{$user->name} has been given the following cards: ";
-            foreach ($cards as $card) {
+
+            foreach ($cards as $card){
+                $card->user = $user;
                 echo beautifyCardHtml($card);
             }
-            $classifiedCards = $this->classifyCardsByCategory($user, $cards);
-            $user->cards = $classifiedCards;
+            $user->setCards($cards);
+
+            echo "<pre>{$user->name} has been given the following cards: ";
+
         }
 
         return $users;
     }
-
-    private function classifyCardsByCategory(User $user, array $cards): array
-    {
-        foreach ($cards as $card) {
-            $card->user = $user;
-            if ($card->category !== 'hearts') {
-                $sortedCards['otherCategories'][] = $card;
-            } else {
-                $sortedCards[$card->category][] = $card;
-            }
-        }
-
-        return $sortedCards;
-
-    }
-
 
 }

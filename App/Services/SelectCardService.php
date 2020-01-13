@@ -32,7 +32,7 @@ class SelectCardService implements SelectCardInterface
     public function selectCard(): Card
     {
         $this->setHighestValInSet();
-        $this->filterCardsByCategory();
+        //$this->filterCardsByCategory();
         $this->lowerOrHigherCards();
 
         $cards = sortCardsByValue($this->cards);
@@ -54,15 +54,6 @@ class SelectCardService implements SelectCardInterface
     private function selectFromLowerCards($cards): Card
     {
         return end($cards);
-    }
-
-    private function filterCardsByCategory(): void
-    {
-        if (array_key_exists('hearts', $this->cards)) {
-            $this->cards = $this->cards['hearts'];
-        } else {
-            $this->cards = $this->cards['otherCategories'];
-        }
     }
 
     /**
