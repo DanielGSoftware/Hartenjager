@@ -8,12 +8,11 @@ use App\App\BlackMaid;
 class PagesController
 {
 
-    public function home()
+    public function home(): void
     {
-        $hartenJager = new BlackMaid();
-        $hartenJager->setup();
-        $hartenJager->startGame();
-        // You would return your view here
+        $blackMaid = new BlackMaid();
+        $blackMaid->startGame();
+        // You would return your view here, but since the php files use echo we dont need one,
     }
 
 }

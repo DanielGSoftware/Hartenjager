@@ -3,87 +3,83 @@
 namespace App\App;
 
 use App\App\Models\Card;
-use App\App\Models\User;
+use App\App\Models\Player;
 use App\App\Services\CardService;
-use App\App\Services\SelectCardService;
 
 class BlackMaid
 {
-    private array $users = [];
+    private array $players = [];
     private array $cardsInSet = [];
 
-    private CardService $cardService;
-    private selectCardService $selectCardService;
-
-    public function setup()
+    public function startGame(): void
     {
-        $this->users = User::all();
+        $this->players = Player::all();
 
-        $this->cardService = new CardService();
-        $this->cardService->setup();
-        $this->users = $this->cardService->assignCards($this->users);
-        $this->selectCardService = new SelectCardService();
-    }
-
-    public function startGame()
-    {
-        while (true) {
-            if ($this->checkIfGameEnds()) {
-                die();
-            } else {
-                if (!$this->usersHaveCards()) {
-                    $this->users = $this->cardService->assignCards($this->users);
-                }
-                $this->playRound();
+        while (!$this->checkIfGameEnds()) {
+            if ($this->players[0]->playerHasNoCards()) {
+                $this->assignCards();
             }
+            $this->playRound();
         }
     }
 
-    private function shiftStartingPlayer()
+    private function assignCards(): void
     {
-        $firstUser = array_shift($this->users);
-        $this->users[3] = $firstUser;
+        $this->players = CardService::assignCardsToPlayers($this->players);
     }
 
-    protected function playRound()
+    /**
+     * Shift the starting order for the players so that the next player will start the round.
+     */
+    private function shiftStartingPlayer(): void
+    {
+        $firstPlayer = array_shift($this->players);
+        $this->players[3] = $firstPlayer;
+    }
+
+    private function playRound(): void
     {
         $this->cardsInSet = [];
-        $turn = 1;
+        foreach ($this->players as $key => $player) {
+            $player->key = $key;
 
-        foreach ($this->users as $key => $user) {
-            $this->selectCardService->setCards($user->getCards());
-            $this->selectCardService->setCardsInSet($this->cardsInSet);
-            $this->selectCardService->setTurn($turn);
+            $card = $player->selectCard($this->cardsInSet);
 
-            $card = $this->selectCardService->selectCard();
-            $this->playCard($card, $user);
-            $turn++;
-
+            $this->playCard($card, $player);
         }
-        $this->assignPenaltyPoints();
-        echo '<br/> ';
+
+        $this->assignPenaltyPointsToPlayer();
         $this->shiftStartingPlayer();
+        echo '<br/>';
     }
 
 
-    private function playCard(Card $card, User $user): void
+    private function playCard(Card $card, Player $player): void
     {
         $this->cardsInSet[] = $card;
-        echo "<pre> {$user->name} has played ";
-        $user->removeCard($card);
+        echo "<pre> {$player->name} has played ";
+
         echo beautifyCardHtml($card);
     }
 
 
     private function checkIfGameEnds(): bool
     {
-        foreach ($this->users as $user) {
-            if (isset($user->penaltyPoints) && $user->penaltyPoints >= 50) {
-                echo "<pre> Game ended. {$user->name} lost the game!";
+        foreach ($this->players as $player) {
+            if (isset($player->penaltyPoints) && $player->penaltyPoints >= 50) {
+                echo "<pre> Game ended. {$player->name} lost the game!";
                 return true;
             }
         }
         return false;
+    }
+
+    private function assignPenaltyPointsToPlayer(): void
+    {
+        $highestCard = highestCardInSet($this->cardsInSet);
+        $player = $highestCard->player;
+        $player->penaltyPoints += $this->calculatePenaltyPoints();
+        echo "<pre> {$player->name} has won this round.";
     }
 
     private function calculatePenaltyPoints(): int
@@ -92,24 +88,7 @@ class BlackMaid
         foreach ($this->cardsInSet as $card) {
             $penaltyPoints += $card->penalty_points;
         }
-
         return $penaltyPoints;
-    }
-
-    private function assignPenaltyPoints(): void
-    {
-        $highestCard = highestCardInSet($this->cardsInSet);
-        $user = $highestCard->user;
-        $user->penaltyPoints += $this->calculatePenaltyPoints();
-        echo "<pre> {$user->name} has won this round.";
-    }
-
-    private function usersHaveCards(): bool
-    {
-        if (empty($this->users[0]->getCards())) {
-            return false;
-        }
-        return true;
     }
 
 }

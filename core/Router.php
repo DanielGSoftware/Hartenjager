@@ -6,13 +6,22 @@ use RuntimeException;
 
 class Router
 {
+
+    /**
+     * All the registered routes.
+     * @var array
+     */
     public $routes = [
         'GET' => [],
         'POST' => []
     ];
 
-
-    public static function load($file)
+    /**
+     * Load the file containg all the routes.
+     * @param $file
+     * @return Router
+     */
+    public static function load($file): Router
     {
         $router = new static;
 
@@ -21,18 +30,23 @@ class Router
         return $router;
     }
 
-    public function get($uri, $controller)
+    /**
+     * Register a get route.
+     * @param $uri
+     * @param $controller
+     */
+    public function get($uri, $controller): void
     {
         $this->routes['GET'][$uri] = $controller;
     }
 
 
-    public function post($uri, $controller)
-    {
-        $this->routes['POST'][$uri] = $controller;
-    }
-
-
+    /**
+     * Load the controller's method associated with the URI
+     * @param $uri
+     * @param $requestType
+     * @return mixed
+     */
     public function direct($uri, $requestType)
     {
         if (array_key_exists($uri, $this->routes[$requestType])) {
@@ -45,6 +59,12 @@ class Router
     }
 
 
+    /**
+     * Load the controller and call it's action.
+     * @param $controller
+     * @param $action
+     * @return mixed
+     */
     protected function callAction($controller, $action)
     {
         $controller = "App\\Controllers\\{$controller}";

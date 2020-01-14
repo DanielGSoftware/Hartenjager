@@ -5,44 +5,47 @@ namespace App\App\Services;
 use App\App\Interfaces\SelectCardInterface;
 use App\App\Models\Card;
 
+/**
+ * This service is responsible for picking the best card that a player can play in certain situations.
+ * Class SelectCardService
+ */
 class SelectCardService implements SelectCardInterface
 {
-    private array $cards;
-    private array $cardsInSet;
+    private $playerCards;
+    private array $cardsInSet = [];
     private int $turn;
     private int $highestValInSet = 0;
 
-    protected bool $userHasALowerCard = false;
+    private bool $playerHasALowerCard = false;
 
-    public function setCards(array $cards): void
+    public function setup(array $playerCards, array $cardsInSet, int $turn): void
     {
-        $this->cards = $cards;
-    }
-
-    public function setCardsInSet(array $cardsInset): void
-    {
-        $this->cardsInSet = $cardsInset;
-    }
-
-    public function setTurn(int $turn): void
-    {
+        $this->playerCards = $playerCards;
+        $this->cardsInSet = $cardsInSet;
         $this->turn = $turn;
+        $this->setHighestValInSet();
+        $this->useLowerOrHigherCards();
     }
 
+    /**
+     * Select the best possible card for the player.
+     * @return Card
+     */
     public function selectCard(): Card
     {
-        $this->setHighestValInSet();
-        //$this->filterCardsByCategory();
-        $this->lowerOrHigherCards();
-
-        $cards = sortCardsByValue($this->cards);
-        if ($this->userHasALowerCard) {
-            return $this->selectFromLowerCards($cards);
+        $playerCards = sortCardsByValue($this->playerCards);
+        if ($this->playerHasALowerCard) {
+            return $this->selectFromLowerCards($playerCards);
         }
-
-        return $this->selectFromHigherCards($cards);
+        return $this->selectFromHigherCards($playerCards);
     }
 
+    /**
+     * If a player only has cards with a higher value, this function
+     * will be used to choose the best option.
+     * @param $cards
+     * @return Card
+     */
     private function selectFromHigherCards($cards): Card
     {
         if ($this->turn === 4) {
@@ -51,33 +54,40 @@ class SelectCardService implements SelectCardInterface
         return $cards[0];
     }
 
+    /**
+     * If a player has cards with a lower value, this function
+     * will be used to choose the best option.
+     * @param $cards
+     * @return Card
+     */
     private function selectFromLowerCards($cards): Card
     {
         return end($cards);
     }
 
     /**
-     * If the user has one or more cards with a lower value then the current hightest value
-     *  in this set, then return those. Otherwise, return the cards with a higher value.
+     * Check if the player has cards with a lower or a higher value then the current highest card value
+     * in this set.
      */
-    public function lowerOrHigherCards(): void
+    public function useLowerOrHigherCards(): void
     {
-        $cards = [];
-        foreach ($this->cards as $card) {
-            if ($card->value < $this->highestValInSet) {
+        foreach ($this->playerCards as $card) {
+            if ($card->value <= $this->highestValInSet) {
                 $cards[] = $card;
             }
         }
-
-        if (count($cards) !== 0) {
-            $this->cards = $cards;
-            $this->userHasALowerCard = true;
+        if (isset($cards)) {
+            $this->playerCards = $cards;
+            $this->playerHasALowerCard = true;
         }
     }
 
+    /**
+     * Set $highestValInSet to the highest card value in the current set.
+     */
     private function setHighestValInSet(): void
     {
-        if (count($this->cardsInSet) !== 0 ) {
+        if (count($this->cardsInSet) !== 0) {
             $this->highestValInSet = highestCardInSet($this->cardsInSet)->value;
         }
     }

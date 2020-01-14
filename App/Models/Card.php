@@ -13,5 +13,5 @@ class Card extends Model
     public string $type;
     public int $value;
     public int $penalty_points;
-    public User $user;
+    public Player $user;
 }

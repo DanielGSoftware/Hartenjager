@@ -7,8 +7,12 @@ use PDOException;
 
 class Connection
 {
-
-    public static function make($config)
+    /**
+     * Create a new PDO connection
+     * @param array $config
+     * @return PDO
+     */
+    public static function make(array $config): PDO
     {
         try {
             return new PDO(
